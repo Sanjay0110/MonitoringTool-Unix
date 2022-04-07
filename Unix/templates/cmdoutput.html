@@ -1,0 +1,72 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Output</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+
+</head>
+<body>
+    <div class="container">
+        
+        <h3>Check the output of the command: </h3>
+
+        <h4><span class="badge badge-light text-dark">ls -ltr</span></h4>
+            <div class="hstack gap-3 card-body">
+                
+            </div>
+            <div class="hstack gap-3">
+                <h4>Output</h4>
+                <pre>
+                <textarea class="form-control me-auto" id="exampleFormControlTextarea1" rows="15" cols="100" disabled>
+-rw-rw-r--. 1 root root      17884 Nov 21  2016 python-netifaces-0.10.4-3.el7 x86_64.rpm
+-rw-------. 1 root root       1414 Aug  9  2021 anaconda-ks.cfg
+-rw-r--r--. 1 root root          0 Aug 15  2021 moon
+-rw-r--r--. 1 root root          0 Aug 15  2021 star
+drwxr-xr-x. 4 root root         26 Aug 15  2021 apple01
+-rwxrw-r--. 1 root root          0 Aug 21  2021 file1
+-rw-rw-r--. 1 root root         14 Aug 21  2021 file2
+-rw-r--r--. 1 root root         15 Aug 21  2021 file3.cp
+-rw-r--r--. 1 root root         15 Aug 21  2021 file3
+-rw-r--r--. 1 root root         15 Aug 22  2021 file3.org
+-rwsrwsrwx. 1 root root          0 Aug 28  2021 zeb
+drwsrwsrwx. 2 root root          6 Sep 28 22:58 g2
+lrwxrwxrwx. 1 root root          3 Oct 17 18:20 sabc -> abc
+-rw-r--r--. 1 root root        267 Oct 21 22:46 big.gz.bz2
+-rw-r--r--. 1 root root       1045 Oct 23 14:10 backup.tar.bz2
+drwxr-xr-x. 4 root root         31 Dec  4 11:23 lenovo
+-rwxrw-r--. 1 root root          0 Dec  5 19:16 w
+drwxrwxr-x. 2 root root          6 Dec  5 19:17 w1
+-rw-rw-r--. 1 root root      19776 Jan 16 11:56 history
+drwxrwxr-x. 2 root root          6 Jan 16 19:38 prac
+-rw-r--r--. 1 root root         48 Jan 24 22:04 t1
+drwxrwxr-x. 2 root root         24 Jan 29 11:44 sam
+-rw-rw-r--. 1 root root      20480 Jan 31 12:43 z
+-rwxrwxrwx. 1 root root         15 Feb  4 11:42 newfile
+drwxr-xr-x. 4 root root         26 Feb  4 12:03 apple
+-rw-r--r--. 1 root root      22960 Feb  4 21:27 test.dump
+-rw-------. 1 root root 1048576000 Feb  4 21:39 swap
+drwxr-xr-x. 2 root root          6 Feb 16 11:24 data
+-rw-rw-r--. 1 root root        837 Mar 15 22:20 test1.py
+-rw-rw-r--. 1 root root       1059 Mar 15 22:40 Test.py
+                </textarea></pre>
+            </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+
+    <script src="{% static 'main.js' %}"></script>
+</body>
+</html>
