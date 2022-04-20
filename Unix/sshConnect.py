@@ -14,8 +14,8 @@ def connect(command, user):
         ssh.connect(ip, username= username, password= password)
         cmd = command
         stdin,stdout,stderr = ssh.exec_command(cmd)
-        values = stdout.readlines()
+        output = stdout.readlines()
         ssh.close()
-        return values
+        return output
     except(BadHostKeyException, AuthenticationException, SSHException) as exc:
         return exc

@@ -1,9 +1,12 @@
 from asyncio.windows_events import NULL
 from calendar import day_abbr
+import cmd
+from http.client import HTTP_PORT
 from json import load
 from optparse import Values
 from platform import machine
 import re
+from turtle import update
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 
@@ -11,8 +14,10 @@ from django.shortcuts import redirect, render
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
+from django.contrib.auth.models import User
 
 #Library to run commands on a machine
+import os
 from subprocess import check_output
 import paramiko
 from paramiko import BadHostKeyException
@@ -29,10 +34,9 @@ import json as simplejson
 def loginPage(request):
     if request.user.is_authenticated:
         return redirect('index')
-
     elif request.method=='POST':
-        username = request.POST.get('hostname')
-        password = request.POST.get('passwd')
+        username = request.POST.get('username')
+        password = request.POST.get('password')
         user = authenticate(username=username, password=password)
 
         if user is not None:
@@ -48,14 +52,11 @@ def signupPage(request):
     if request.method=='POST':
         form = createUser(request.POST)
         if form.is_valid():
-            user = form.save()
-            username = form.cleaned_data('username')
-            password = form.cleaned_data('password1')
-            auth = authenticate(username=username, password=password)
-            login(request, auth)
-            return redirect('index')
+            form.save()
+            return redirect('login')
         else:
-            messages.error(request, "There was a problem creating account.")
+            errors = form.errors
+            messages.error(request, errors)
             return redirect('signup')
     else:
         form = createUser()
@@ -65,18 +66,36 @@ def signupPage(request):
 def serverData(request):
     if request.user.is_authenticated:
         if request.method=='POST':
-            """ user = request.user
-            data = request.POST
-            if data:
-                hostname = data.getCleanedData("")
-                ip = data.getCleanedData("")
-                password = data.getCleanedData("") """
+            user = request.user
+            form = serverConfig(request.POST)
+            if form.is_valid():
+                hostname = form.cleaned_data.get('hostname')
+                IPAddr = form.cleaned_data.get('IPAddr')
+                passwd = form.cleaned_data.get('passwd')
+                sshData.objects.update_or_create(user=user, defaults={'hostname':hostname, 'IPAddr': IPAddr, 'passwd':passwd})
+                return redirect('/')
+            else:
+                messages.error(request, form.errors)
+                return redirect('serverData')
         else:
             form = serverConfig()
             user = request.user
-            ssh = sshData.objects.get(user=user)
-            values = {"form": form, "hostname": simplejson.dumps(ssh.hostname), "IP": simplejson.dumps(ssh.IPAddr), "passwd" : simplejson.dumps(ssh.passwd)}
-            return render(request, "serverdata.html", values)
+            ssh = sshData.objects.filter(user=user)
+        
+            if ssh:
+                ssh = sshData.objects.get(user=user)
+                values = {"form": form, "hostname": simplejson.dumps(ssh.hostname), "IP": simplejson.dumps(ssh.IPAddr), "passwd" : simplejson.dumps(ssh.passwd)}
+                return render(request, "serverdata.html", values)
+            else:
+                values = {"form": form}
+                return render(request, "serverdata.html", values)
+
+def logoutPage(request):
+    if request.user.is_authenticated:
+        logout(request)
+        return redirect('login')
+    else:
+        return HttpResponse('Please log in to continue')
 
 def index(request):
     if request.user.is_authenticated:
@@ -93,9 +112,11 @@ def index(request):
         return HttpResponse("<h1>Please log in to continue.<h1>")
 
 def backup(request):
-    logout(request)
-    return redirect('login')
-    #return render(request, "backuparchive.html", )
+    if request.user.is_authenticated:
+        return render(request, "backuparchive.html", )
+    else:
+        return HttpResponse("Please Log in to continue")
+
 
 def process(request):
     if request.user.is_authenticated:
@@ -294,5 +315,15 @@ def graphicalAnalysis(request):
     else:
         return HttpResponse("<h1>Please log in to continue.<h1>")   
 
-def cmdOutput(request):
-    return render(request, 'cmdoutput.html', )
+def runCommand(request):
+    if request.user.is_authenticated:
+        user = request.user
+        ssh_login = sshData.objects.get(user=user)
+        hostname = ssh_login.hostname
+        passwd = ssh_login.passwd
+        ip = ssh_login.IPAddr
+        command = "ssh " +hostname +"@" +ip
+        #os.system(('start cmd /k "{0}"').format(command))
+        return render(request, 'runcommand.html')
+    else:
+        return HttpResponse(request, "Please log in to continue.")
