@@ -1,5 +1,6 @@
 from asyncio.windows_events import NULL
 from calendar import day_abbr
+from cgi import test
 import cmd
 from http.client import HTTP_PORT
 from json import load
@@ -17,6 +18,7 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 
 #Library to run commands on a machine
+import random
 import os
 from subprocess import check_output
 import paramiko
@@ -113,7 +115,63 @@ def index(request):
 
 def backup(request):
     if request.user.is_authenticated:
-        return render(request, "backuparchive.html", )
+        name_check = []
+        if request.method=='POST':
+            user = request.user
+            if request.POST:
+                back_filename = str(request.POST.get('formGroupExampleInput2'))
+            else:
+                back_filename = '*'
+            filename = sshConnect.filename()
+            while filename in name_check:
+                filename = sshConnect.filename()
+            
+            #Command for backing up the file entered by the user
+            command = 'tar -jcvf' +' ' +filename +' ' +back_filename
+
+            #Executing the command on the server
+            if result==False:
+                return redirect('error')
+            else:
+                result = sshConnect.connect(command, user)
+                
+                return redirect('backupArchive')
+        else:
+            user = request.user 
+
+            #Command to get the list of files
+            command = 'ls --file-type'
+            #List to store the output 
+            test_lst = []
+            test2_lst = []
+            output_lst_name = []
+            output_lst_name2 = []
+
+            #Actual code
+            result = sshConnect.connect(command, user)
+            if result == False:
+                return redirect('error')
+            else:
+                if len(result)!=0:
+                    for val in result:
+                        temp1 = val.split(",")
+                        for data in temp1:
+                            test_lst.append(data.split(":"))
+                for data in test_lst:
+                    for val in data:
+                        test2_lst.append(val)
+
+                for val in test2_lst[0::2]:
+                    output_lst_name.append(val)
+                for val in test2_lst[1::2]:
+                    output_lst_name2.append(val)
+
+                name_check = output_lst_name
+                main_result = dict(zip(output_lst_name, output_lst_name2))
+                values = {'res': main_result}
+                return render(request, 'backuparchive.html', values)
+
+
     else:
         return HttpResponse("Please Log in to continue")
 
@@ -138,32 +196,35 @@ def process(request):
 
         #Executing command to get the result
         result = sshConnect.connect(process_cmd, user)
-        if len(result)!=0:
-            for val in result:
-                upperPart.append(val.split("\n"))
+        if result == False:
+            return redirect('error')
+        else:
+            if len(result)!=0:
+                for val in result:
+                    upperPart.append(val.split("\n"))
+                
+            #For retrieving the top 5 running processes
+            for val in result[7::1]:
+                process_list.append(val.split())
+
+            #For retireving the statistics
+            for val in upperPart[0]:
+                usersLoad.append(val.split(","))
+
+            for val in usersLoad[0]:
+                lst1.append(val)    #We can use the upper part by emptying itd
+
+            users = lst1[1]
+            loadAverage = lst1[2] +"," + lst1[3] +"," + lst1[4]
+            tasks_out = result[1]
+            cpu_out = result[2]
+            ram_out = result[3]
+            swap_out = result[4]
             
-        #For retrieving the top 5 running processes
-        for val in result[7::1]:
-            process_list.append(val.split())
+            #Creating a dictionary to pass list values to template
+            values = {"users": users, "load": loadAverage, "tasks": tasks_out, "cpu": cpu_out, "ram": ram_out, 'swap': swap_out , "processData": process_list, "fullData": upperPart}
 
-        #For retireving the statistics
-        for val in upperPart[0]:
-            usersLoad.append(val.split(","))
-
-        for val in usersLoad[0]:
-            lst1.append(val)    #We can use the upper part by emptying itd
-
-        users = lst1[1]
-        loadAverage = lst1[2] +"," + lst1[3] +"," + lst1[4]
-        tasks_out = result[1]
-        cpu_out = result[2]
-        ram_out = result[3]
-        swap_out = result[4]
-        
-        #Creating a dictionary to pass list values to template
-        values = {"users": users, "load": loadAverage, "tasks": tasks_out, "cpu": cpu_out, "ram": ram_out, 'swap': swap_out , "processData": process_list, "fullData": upperPart}
-
-        return render(request, 'monitorprocess.html', values)
+            return render(request, 'monitorprocess.html', values)
     else:
         return HttpResponse("<h1>Please log in to continue.<h1>")
 
@@ -186,27 +247,21 @@ def users(request):
 
         #Executing both commands and storing data in respective lists
         result = sshConnect.connect(login_command, user)
-        if len(result)!=0:
-            for val in result:
-                login.append(val.split())
+        if result == False:
+            return redirect('error')
+        else:
+            if len(result)!=0:
+                for val in result:
+                    login.append(val.split())
 
-        result = sshConnect.connect(badLogin_command, user)
-        if len(result)!=0:
-            for val in result:
-                badLogin.append(val.split(": "))
+            result = sshConnect.connect(badLogin_command, user)
+            if len(result)!=0:
+                for val in result:
+                    badLogin.append(val.split(": "))
 
-        """ for val in badLogin[0::2]:
-            lst2.append(val.strip(" "))
-        
-        lst1.clear()
-        for val in badLogin[1::2]:
-            lst1.append(val) """
-
-        #badLogin_dict = dict(zip(lst2, lst1))
-
-        #Passing the list data to dictionary
-        values = {"login": login, "badLogin": badLogin}
-        return render(request, 'users.html', values)
+            #Passing the list data to dictionary
+            values = {"login": login, "badLogin": badLogin}
+            return render(request, 'users.html', values)
 
     else:
         return HttpResponse("<h1>Please log in to continue.<h1>")
@@ -228,39 +283,42 @@ def diskSpace(request):
 
         #Three commands are executed and data is store in the respective list 
         result = sshConnect.connect(command_disk, user)
-        if len(result)!=0:
-            for val in result:
-                lst1.append(val.split("\n"))
+        if result == False:
+            return redirect('error')
+        else:
+            if len(result)!=0:
+                for val in result:
+                    lst1.append(val.split("\n"))
 
-        for data in lst1:
-            for val in data:
-                disk_data.append(val.split())
+            for data in lst1:
+                for val in data:
+                    disk_data.append(val.split())
 
-        lst1.clear()
-        result = sshConnect.connect(command_devsda, user)
-        if len(result)!=0:
-            for val in result:
-                lst1.append(val.split("\n"))
-        
-        for data in lst1:
-            for val in data:
-                devsda_data.append(val.split())
+            lst1.clear()
+            result = sshConnect.connect(command_devsda, user)
+            if len(result)!=0:
+                for val in result:
+                    lst1.append(val.split("\n"))
+            
+            for data in lst1:
+                for val in data:
+                    devsda_data.append(val.split())
 
-        lst1.clear()
-        result = sshConnect.connect(command_devsdb, user)
-        if len(result)!=0:
-            for val in result:
-                lst1.append(val.split("\n"))
-        
-        for data in lst1:
-            for val in data:
-                devsdb_data.append(val.split())
+            lst1.clear()
+            result = sshConnect.connect(command_devsdb, user)
+            if len(result)!=0:
+                for val in result:
+                    lst1.append(val.split("\n"))
+            
+            for data in lst1:
+                for val in data:
+                    devsdb_data.append(val.split())
 
-        devsda_data = devsda_data + devsdb_data
+            devsda_data = devsda_data + devsdb_data
 
-        #Data is passed as dictionary to the template
-        values = {"diskData": disk_data, "devsdaData": devsda_data}
-        return render(request, 'diskspace.html', values)
+            #Data is passed as dictionary to the template
+            values = {"diskData": disk_data, "devsdaData": devsda_data}
+            return render(request, 'diskspace.html', values)
     else:
         return HttpResponse("<h1>Please log in to continue.<h1>")
 
@@ -283,35 +341,41 @@ def graphicalAnalysis(request):
 
         #Executing the commands
         result = sshConnect.connect(mem_util, user)
-        for val in result:
-            sample_lst = val.split(":")
-        mem_util_lst = sample_lst[1].split()
+        if result == False:
+            return redirect('error')
+        else:
+            for val in result:
+                sample_lst = val.split(":")
+            mem_util_lst = sample_lst[1].split()
 
-        mem_lst_pie.append(int(mem_util_lst[0]) - int(mem_util_lst[2]))
-        mem_lst_pie.append(mem_util_lst[2])
+            mem_lst_pie.append(int(mem_util_lst[0]) - int(mem_util_lst[2]))
+            mem_lst_pie.append(mem_util_lst[2])
 
-        mem_lst_bar.append(mem_util_lst[1])
-        mem_lst_bar.append(mem_util_lst[3])
-        mem_lst_bar.append(mem_util_lst[4])
+            mem_lst_bar.append(mem_util_lst[1])
+            mem_lst_bar.append(mem_util_lst[3])
+            mem_lst_bar.append(mem_util_lst[4])
 
 
         result = sshConnect.connect(cpu_util, user)
-        for val in result:
-            cpu_util_lst = val.split()
-        for i in range (0,3):
-            cpu_util_lst.pop(0)
+        if result == False:
+            return redirect('error')
+        else:
+            for val in result:
+                cpu_util_lst = val.split()
+            for i in range (0,3):
+                cpu_util_lst.pop(0)
 
-        cpu_lst_pie.append(100-float(cpu_util_lst[9]))
-        cpu_lst_pie.append(cpu_util_lst[9])
+            cpu_lst_pie.append(100-float(cpu_util_lst[9]))
+            cpu_lst_pie.append(cpu_util_lst[9])
 
-        cpu_lst_bar.append(cpu_util_lst[0])
-        cpu_lst_bar.append(cpu_util_lst[2])
-        cpu_lst_bar.append(cpu_util_lst[3])
+            cpu_lst_bar.append(cpu_util_lst[0])
+            cpu_lst_bar.append(cpu_util_lst[2])
+            cpu_lst_bar.append(cpu_util_lst[3])
 
-        #Assigning the values to the variables
-        values = {"memory_pie": simplejson.dumps(mem_lst_pie), 'memory_bar': simplejson.dumps(mem_lst_bar), 'cpu_pie': simplejson.dumps(cpu_lst_pie), 'cpu_bar': simplejson.dumps(cpu_lst_bar)}
+            #Assigning the values to the variables
+            values = {"memory_pie": simplejson.dumps(mem_lst_pie), 'memory_bar': simplejson.dumps(mem_lst_bar), 'cpu_pie': simplejson.dumps(cpu_lst_pie), 'cpu_bar': simplejson.dumps(cpu_lst_bar)}
 
-        return render(request, 'graphicalanalysis.html', values)
+            return render(request, 'graphicalanalysis.html', values)
     else:
         return HttpResponse("<h1>Please log in to continue.<h1>")   
 
@@ -323,7 +387,11 @@ def runCommand(request):
         passwd = ssh_login.passwd
         ip = ssh_login.IPAddr
         command = "ssh " +hostname +"@" +ip
-        #os.system(('start cmd /k "{0}"').format(command))
+        os.system(('start cmd /k "{0}"').format(command))
         return render(request, 'runcommand.html')
     else:
         return HttpResponse(request, "Please log in to continue.")
+
+def error(request):
+    #Function to return the error page when the server is offline or some other exceptions occur
+    return render(request, 'error.html')

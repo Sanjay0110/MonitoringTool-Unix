@@ -43,7 +43,7 @@
               <h5 class="card-header">Backup and Archive</h5>
               <div class="card-body">
                 <h5 class="card-title">Make a compressed archive of one or more files or directories</h5>
-                <p class="card-text">This creates a compressed or zipped archive files of one or more specified files or directories. For easier distribution and storage, a single zipped archive has multiple compressed files. You can make a compressed archive using gzip or bzip2 compression</p>
+                <p class="card-text">Tar stands for tape archive and allows you to create backups using: tar , gzip , and bzip . It compresses files and directories into an archive file, known as a tarball. This command is one of the most widely-used commands for this purpose. Also, the tarball is easily movable from one server to the next.</p>
                 <a href="{% url 'backupArchive' %}">
                   <button class="btn btn-primary" type="button">Take Backup</button>
                 </a>
@@ -56,7 +56,7 @@
                 <h5 class="card-header">Monitor Processes</h5>
                 <div class="card-body">
                   <h5 class="card-title">Process monitor using top</h5>
-                  <p class="card-text">The top command is used to display all the running and active real-time processes which is updated regularly. It displays CPU usage, Memory usage, Swap Memory, Cache Size, Buffer Size, Process PID, User, Commands, high memory and cpu utilization of running processes. You can terminate the processes using "kill -9 &lt;Process-Id&gt;".</p>
+                  <p class="card-text">Processes need to be managed and monitored because they consume system resources like CPU time, memory and disk space. There are also security and safety implications. Monitoring and managing processes is, therefore, an important function of systems administrators.</p>
                   <a href="{% url 'processes' %}">
                     <button class="btn btn-primary" type="button">Monitor</button>
                   </a>
@@ -69,7 +69,7 @@
                 <h5 class="card-header">Manage users</h5>
                 <div class="card-body">
                   <h5 class="card-title">Get a list of currently logged in users</h5>
-                  <p class="card-text">Check which users are currently logged in, since when they are logged in, through which IP address they are logged in, bad login attempts and the historical login data.</p>
+                  <p class="card-text">Check which users are currently logged in, since when they are logged in, through which IP address they are logged in and bad login attempts.</p>
                   <a href="{% url 'manageUser' %}">
                     <button class="btn btn-primary" type="button">Check</button>
                   </a>

@@ -12,5 +12,6 @@ urlpatterns = [
     path('Users/', views.users, name='manageUser'),
     path('DiskSpace/', views.diskSpace, name='diskSpace'),
     path('GraphicaAnalysis', views.graphicalAnalysis, name='graphicalAnalysis'),
-    path('RunCommand/', views.runCommand, name='runCommand')
+    path('RunCommand/', views.runCommand, name='runCommand'),
+    path('Error/', views.error, name='error')
 ]
