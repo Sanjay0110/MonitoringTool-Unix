@@ -129,12 +129,12 @@ def backup(request):
             #Command for backing up the file entered by the user
             command = 'tar -jcvf' +' ' +filename +' ' +back_filename
 
+            result = sshConnect.connect(command, user)
+
             #Executing the command on the server
             if result==False:
                 return redirect('error')
             else:
-                result = sshConnect.connect(command, user)
-                
                 return redirect('backupArchive')
         else:
             user = request.user 
